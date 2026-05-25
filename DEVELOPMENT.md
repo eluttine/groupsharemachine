@@ -161,31 +161,72 @@ A `TimedJob` runs the same sync every 15 minutes.
 
 ## 6. Test fixtures (with LDAP)
 
-The app relies on real LDAP-synced users and groups — there's no pure-Nextcloud fallback for teacher detection or group typing.
+The app relies on real LDAP-synced users and groups — there's no pure-Nextcloud fallback for teacher detection or group typing. The repo ships a self-contained docker LDAP test bed under `dev/ldap/` that injects a puavo-flavoured multi-school dataset into the `osixia/openldap` container that nextcloud-docker-dev provides.
 
-Bring up the `ldap` service from `nextcloud-docker-dev` and bind it via the LDAP admin UI:
+### Files
+
+| File | Purpose |
+|---|---|
+| `dev/ldap/schema.ldif` | Adds minimal puavo schema (`puavoEduPerson`, `puavoEduGroup` aux objectclasses; `puavoId`, `puavoEduGroupType`, `puavoEduPersonAffiliation`, `puavoSchool` attributes) under cn=config. |
+| `dev/ldap/seed.ldif` | Two schools (Alpha, Beta), five users (alice/bob/charlie/diana/erik) and four class groups, designed to exercise single-school, multi-school, and cross-school-denial cases. |
+| `dev/ldap/apply.sh` | `ldapadd`s schema + seed into the running `master_ldap_1` container. Idempotent — re-running just logs "already exists" for entries already there. |
+| `dev/ldap/use-docker.sh` | Reconfigures NC's `user_ldap` to bind to the docker LDAP (`ldap:389`, anonymous bind allowed for admin). |
+
+### One-time setup
 
 ```bash
+# 1. Bring up the LDAP service alongside stable33
+cd ~/dev/nextcloud/nextcloud-docker-dev
 docker-compose up -d ldap
+
+# 2. Load the puavo schema + seed data
+cd ~/dev/nextcloud/groupsharemachine
+bash dev/ldap/apply.sh
+
+# 3. Point local NC at the docker LDAP
+bash dev/ldap/use-docker.sh
+
+# 4. Delete the pre-seeded local NC users that collide with our LDAP uids
+#    (otherwise NC's Database backend wins authentication first)
+cd ~/dev/nextcloud/nextcloud-docker-dev
+for u in alice bob charlie diana erik john jane; do
+  docker-compose exec -T -u www-data stable33 php occ user:delete "$u" 2>/dev/null || true
+done
 ```
 
-Then in the Nextcloud admin → LDAP / AD integration, configure:
-- A user filter that includes test accounts with `puavoEduPersonAffiliation` populated
-- A group filter that includes groups with `puavoEduGroupType=year class` or `puavoEduGroupType=teaching_group`
-- Set Advanced → Directory Settings → **Base Group Tree** and **Group-Member association** (`memberUid` for `posixGroup`)
+### Test accounts (passwords match the uid)
 
-You do **not** need to configure a Role Field — the app reads `puavoEduPersonAffiliation` directly from LDAP (it's multi-valued and would be flattened by the Role Field mapping).
+| Login | NC uid | Role | School(s) | Use case |
+|---|---|---|---|---|
+| `alice` | `100001` | teacher | Alpha | single-school teacher |
+| `bob` | `100002` | teacher | Alpha + Beta | multi-school teacher |
+| `charlie` | `100003` | teacher | Beta | single-school teacher |
+| `diana` | `100004` | student | Alpha | non-teacher, real-LDAP-member of `1A` |
+| `erik` | `100005` | student | Beta | non-teacher |
 
-Verify by inspecting our tables:
+The class groups `1A` (Alpha) and `1A_2` (Beta — collision suffix added by user_ldap because both have `displayName: 1A`) intentionally share a display name to exercise the picker's school-disambiguation labels.
+
+### Expected matrix
+
+```
+User      Type "1A" in share dialog → picker shows
+─────────────────────────────────────────────────────
+alice     1A (Alpha School)
+bob       1A (Alpha School)  +  1A (Beta School)
+charlie                          1A (Beta School)
+diana     1A                  (real LDAP membership; app contributes nothing)
+```
+
+### Inspect
 
 ```bash
 docker exec -t master_database-mysql_1 mysql -uroot -pnextcloud stable33 -e "
   SELECT * FROM oc_groupsharemachine_groups;
   SELECT * FROM oc_groupsharemachine_teachers;
 "
+ncocc stable33 groupsharemachine:diagnose 100001 1A
 ```
 
-Then log in as a teacher, open file sharing, and type a class group name into the native share dialog — the group should appear and the share should succeed. Log in as a student, try sharing to a different class group — it should be rejected.
 
 ## 7. Xdebug
 
