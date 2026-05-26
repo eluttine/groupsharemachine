@@ -21,7 +21,7 @@
 #   - alpha-1a:    year class @ Alpha, members: diana
 #   - alpha-2a:    year class @ Alpha, no members
 #   - beta-1a:     year class @ Beta, members: erik
-#   - beta-math:   teaching_group @ Beta, members: erik
+#   - beta-math:   teaching group @ Beta, members: erik
 #
 # Expected app behaviour after sync:
 #   teachers table: 4 rows = (alice, Alpha) (bob, Alpha) (bob, Beta) (charlie, Beta)
@@ -216,6 +216,6 @@ cn: beta-math
 displayName: Math (teaching group)
 gidNumber: 300004
 puavoId: 300004
-puavoEduGroupType: teaching_group
+puavoEduGroupType: teaching group
 puavoSchool: puavoId=200002,ou=Schools,ou=Puavo,dc=planetexpress,dc=com
 memberUid: erik

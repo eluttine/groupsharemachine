@@ -9,7 +9,7 @@ This file briefs AI coding assistants on the project's conventions, runtime mode
 
 ## What this app is
 
-A **Puavo-specific** Nextcloud app. Lets users with `puavoEduPersonAffiliation=teacher` share files to class groups (`puavoEduGroupType ∈ {year class, teaching_group}`) through Nextcloud's native share UI — including from mobile and desktop clients. Implemented as a custom `OCP\GroupInterface` backend that virtualises teacher membership in class groups, plus an `ISearchPlugin` so the picker surfaces the right entries.
+A **Puavo-specific** Nextcloud app. Lets users with `puavoEduPersonAffiliation=teacher` share files to class groups (`puavoEduGroupType ∈ {year class, teaching group, course group}`) through Nextcloud's native share UI — including from mobile and desktop clients. Implemented as a custom `OCP\GroupInterface` backend that virtualises teacher membership in class groups, plus an `ISearchPlugin` so the picker surfaces the right entries.
 
 Read [`DEVELOPMENT.md`](DEVELOPMENT.md) for the local dev environment (Docker Compose, user_ldap setup, sample fixtures).
 
@@ -110,7 +110,7 @@ Nextcloud uses two **distinct** code paths for a group share — the picker (aut
 
 `Service\LdapSync` uses paged LDAP searches with combined filters (user_ldap's configured filter `AND` our predicate). Avoid going back to the old "enumerate everyone, attribute-read per user" pattern — it's O(n_users + n_groups) and was the source of multi-minute syncs on real puavo data.
 
-- Filter for groups: `(&<configured>(|(puavoEduGroupType=year class)(puavoEduGroupType=teaching_group)))`
+- Filter for groups: `(&<configured>(|(puavoEduGroupType=year class)(puavoEduGroupType=teaching group)(puavoEduGroupType=course group)))`
 - Filter for users: `(&<configured>(puavoEduPersonAffiliation=teacher))`
 - Per-record school DN resolution: cached within a single sync run (see `$schoolNameCache`).
 - Background job runs every 15 minutes via `OCP\BackgroundJob\TimedJob`. Operators trigger immediate sync with `occ groupsharemachine:sync`.

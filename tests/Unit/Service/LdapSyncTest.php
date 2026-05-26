@@ -33,7 +33,7 @@ class LdapSyncTest extends TestCase {
 		$sync = $this->makeSync(
 			groups: [
 				'puavoid=10,ou=groups' => ['gid' => 'class_1a', 'puavoedugrouptype' => ['year class']],
-				'puavoid=11,ou=groups' => ['gid' => 'math_g',   'puavoedugrouptype' => ['teaching_group']],
+				'puavoid=11,ou=groups' => ['gid' => 'math_g',   'puavoedugrouptype' => ['teaching group']],
 			],
 			users: [],
 		);

@@ -34,7 +34,7 @@ class LdapSync {
 	public const TEACHER_AFFILIATION = 'teacher';
 
 	/** @var list<string> */
-	public const ALLOWED_GROUP_TYPES = ['year class', 'teaching_group'];
+	public const ALLOWED_GROUP_TYPES = ['year class', 'teaching group', 'course group'];
 
 	private const PAGE_SIZE = 500;
 

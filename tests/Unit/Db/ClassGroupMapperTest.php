@@ -101,7 +101,7 @@ class ClassGroupMapperTest extends TestCase {
 		$this->assertSame(['class_1a'], $this->mapper->listGids());
 
 		// upsert again with a new type — should update in place, not duplicate
-		$this->mapper->upsert('class_1a', 'teaching_group');
+		$this->mapper->upsert('class_1a', 'teaching group');
 		$this->assertSame(['class_1a'], $this->mapper->listGids());
 
 		$row = $this->db->getQueryBuilder()
@@ -109,7 +109,7 @@ class ClassGroupMapperTest extends TestCase {
 			->from(ClassGroupMapper::TABLE)
 			->executeQuery()
 			->fetch();
-		$this->assertSame('teaching_group', $row['group_type']);
+		$this->assertSame('teaching group', $row['group_type']);
 	}
 
 	public function testDeleteByGid(): void {
@@ -146,7 +146,7 @@ class ClassGroupMapperTest extends TestCase {
 	public function testSearchGidsSubstringMatch(): void {
 		$this->mapper->upsert('class_1a', 'year class');
 		$this->mapper->upsert('class_2b', 'year class');
-		$this->mapper->upsert('teaching_math', 'teaching_group');
+		$this->mapper->upsert('teaching_math', 'teaching group');
 
 		$this->assertEqualsCanonicalizing(
 			['class_1a', 'class_2b'],

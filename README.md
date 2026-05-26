@@ -13,7 +13,7 @@ A Nextcloud app that lets teachers share files to class groups through Nextcloud
 
 1. The admin enables `shareapi_only_share_with_group_members` (default off in Nextcloud). With that on, normal users can only share to groups they're a member of.
 2. A background job walks LDAP via `user_ldap`'s proxies and refreshes two local tables:
-   - `oc_groupsharemachine_groups` — gids whose `puavoEduGroupType` is `year class` or `teaching_group`
+   - `oc_groupsharemachine_groups` — gids whose `puavoEduGroupType` is `year class`, `teaching group`, or `course group`
    - `oc_groupsharemachine_teachers` — uids whose multi-valued `puavoEduPersonAffiliation` includes the value `teacher`
 3. A custom group backend then reports, for every recorded class group, that any recorded teacher is a member — but only for sharing checks. The class groups do **not** show up in the teacher's group list and the teacher does **not** auto-receive shares directed at them.
 
@@ -28,7 +28,7 @@ Reading `puavoEduPersonAffiliation` directly (rather than via Nextcloud's `role`
 - A **Puavo** LDAP instance, reachable from Nextcloud
 - `user_ldap` enabled and bound against that Puavo LDAP — without this the app has nothing to read and `occ groupsharemachine:sync` reports `seen=0`
 - The `puavoEduPersonAffiliation` and `puavoEduGroupType` attributes are readable by the user_ldap bind agent (the app reads them on demand via user_ldap's connection — no extra LDAP credentials needed)
-- Groups in LDAP have `puavoEduGroupType` set to `year class` or `teaching_group` for the classes teachers should be allowed to share to
+- Groups in LDAP have `puavoEduGroupType` set to `year class`, `teaching group`, or `course group` for the classes teachers should be allowed to share to
 - The admin setting **Sharing → Restrict users to only share with users in their groups** turned on (or `occ config:app:set core shareapi_only_share_with_group_members --value=yes`) — without this the restriction the app bypasses doesn't exist in the first place
 
 ## Setup
@@ -48,7 +48,7 @@ occ groupsharemachine:sync
 
 ## Testing
 
-Pre-requisite: a Puavo LDAP populated with at least one teacher (`puavoEduPersonAffiliation` containing `teacher`) and one class group (`puavoEduGroupType` set to `year class` or `teaching_group`).
+Pre-requisite: a Puavo LDAP populated with at least one teacher (`puavoEduPersonAffiliation` containing `teacher`) and one class group (`puavoEduGroupType` set to `year class`, `teaching group`, or `course group`).
 
 1. Run `occ groupsharemachine:sync` — expect non-zero `kept` for both groups and teachers.
 2. `occ groupsharemachine:diagnose <teacher-uid> <class-gid>` — `virtualised by this app: YES` confirms the wiring.
